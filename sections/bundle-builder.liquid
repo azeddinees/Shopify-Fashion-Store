@@ -1,0 +1,545 @@
+{% liquid
+  assign bundle_collection = section.settings.collection
+  assign product_limit = section.settings.products_to_show
+  assign threshold = section.settings.discount_threshold
+  assign discount = section.settings.discount_percentage
+  assign currency_code = cart.currency.iso_code | default: shop.currency
+  assign label_status_remaining = 'bundle.status_remaining' | t: count: '__COUNT__', discount: discount
+  assign label_status_unlocked = 'bundle.status_unlocked' | t: discount: discount
+%}
+
+<bundle-builder
+  class="bundle-builder"
+  data-discount-threshold="{{ threshold }}"
+  data-discount-percentage="{{ discount }}"
+  data-currency="{{ currency_code }}"
+  data-locale="{{ request.locale.iso_code }}"
+  data-bundle-label="{{ section.settings.bundle_property_value | escape }}"
+  data-label-add="{{ 'bundle.add' | t | escape }}"
+  data-label-added="{{ 'bundle.added' | t | escape }}"
+  data-label-submit="{{ 'bundle.submit' | t | escape }}"
+  data-label-submitting="{{ 'bundle.submitting' | t | escape }}"
+  data-label-error="{{ 'bundle.error' | t | escape }}"
+  data-label-status-remaining="{{ label_status_remaining | escape }}"
+  data-label-status-unlocked="{{ label_status_unlocked | escape }}"
+  style="
+    --bundle-padding-block-start: {{ section.settings.padding_top }}px;
+    --bundle-padding-block-end: {{ section.settings.padding_bottom }}px;
+  "
+>
+  <div class="bundle-builder__inner">
+    <header class="bundle-builder__header">
+      {% if section.settings.heading != blank %}
+        <h2 class="bundle-builder__title">{{ section.settings.heading | escape }}</h2>
+      {% endif %}
+
+      {% if section.settings.subheading != blank %}
+        <p class="bundle-builder__subheading">{{ section.settings.subheading | escape }}</p>
+      {% endif %}
+
+      <div
+        class="bundle-builder__progress"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="{{ threshold }}"
+        aria-valuenow="0"
+        data-bundle-progress
+      >
+        <div class="bundle-builder__progress-bar" data-bundle-progress-bar></div>
+      </div>
+
+      <p class="bundle-builder__status" data-bundle-status>
+        {{ 'bundle.status_remaining' | t: count: threshold, discount: discount }}
+      </p>
+    </header>
+
+    {% if bundle_collection != blank and bundle_collection.products_count > 0 %}
+      <div class="bundle-builder__grid">
+        {% for product in bundle_collection.products limit: product_limit %}
+          {% liquid
+            assign variant = product.selected_or_first_available_variant
+            if product.available == false or variant == blank
+              continue
+            endif
+
+            assign image_alt = product.title
+            if product.featured_image.alt != blank
+              assign image_alt = product.featured_image.alt
+            endif
+          %}
+          <article
+            class="bundle-builder__card"
+            data-bundle-card
+            data-product-id="{{ product.id }}"
+            data-variant-id="{{ variant.id }}"
+            data-price="{{ variant.price }}"
+          >
+            <div class="bundle-builder__media">
+              {% if product.featured_image %}
+                {{
+                  product.featured_image
+                  | image_url: width: 600
+                  | image_tag:
+                    widths: '200, 300, 400, 600',
+                    sizes: '(min-width: 750px) 220px, 45vw',
+                    loading: 'lazy',
+                    class: 'bundle-builder__image',
+                    alt: image_alt
+                }}
+              {% endif %}
+            </div>
+
+            <h3 class="bundle-builder__product-title">
+              <a href="{{ product.url }}">{{ product.title | escape }}</a>
+            </h3>
+            <p class="bundle-builder__price">{{ variant.price | money }}</p>
+
+            <button
+              type="button"
+              class="bundle-builder__toggle"
+              data-bundle-toggle
+              aria-pressed="false"
+            >
+              {{ 'bundle.add' | t }}
+            </button>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="bundle-builder__empty">{{ 'bundle.empty_collection' | t }}</p>
+    {% endif %}
+
+    <footer class="bundle-builder__footer">
+      <div class="bundle-builder__summary">
+        <p>
+          {{ 'bundle.items_count' | t }}:
+          <strong data-bundle-count>0</strong>
+        </p>
+        <p>
+          {{ 'bundle.subtotal' | t }}:
+          <strong data-bundle-subtotal>{{ 0 | money }}</strong>
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="bundle-builder__submit"
+        data-bundle-submit
+        disabled
+      >
+        {{ 'bundle.submit' | t }}
+      </button>
+    </footer>
+  </div>
+</bundle-builder>
+
+{% stylesheet %}
+  .bundle-builder {
+    display: block;
+    padding-block-start: var(--bundle-padding-block-start, 0);
+    padding-block-end: var(--bundle-padding-block-end, 0);
+    color: var(--color-foreground);
+  }
+
+  .bundle-builder__inner {
+    display: grid;
+    grid-template-columns: var(--content-grid);
+    row-gap: 2rem;
+  }
+
+  .bundle-builder__inner > * {
+    grid-column: 2;
+  }
+
+  .bundle-builder__header {
+    text-align: center;
+  }
+
+  .bundle-builder__title {
+    font-family: var(--font-primary--family);
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+
+  .bundle-builder__subheading {
+    margin: 0 auto 1rem;
+    max-width: 40rem;
+    color: color-mix(in srgb, var(--color-foreground) 75%, transparent);
+  }
+
+  .bundle-builder__progress {
+    width: min(100%, 24rem);
+    height: 0.625rem;
+    margin: 0 auto 0.75rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-foreground) 12%, transparent);
+  }
+
+  .bundle-builder__progress-bar {
+    width: 0%;
+    height: 100%;
+    background: var(--color-foreground);
+    transition: width 0.3s ease;
+  }
+
+  .bundle-builder__status {
+    margin: 0;
+  }
+
+  .bundle-builder__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13.75rem, 1fr));
+    gap: 1.5rem;
+  }
+
+  .bundle-builder__card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid color-mix(in srgb, var(--color-foreground) 15%, transparent);
+    border-radius: var(--style-border-radius-inputs);
+    background: var(--color-background);
+    text-align: center;
+    transition: border-color 0.2s ease;
+  }
+
+  .bundle-builder__card.is-selected {
+    border-color: var(--color-foreground);
+    border-width: 2px;
+  }
+
+  .bundle-builder__media {
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: var(--style-border-radius-inputs);
+    background: color-mix(in srgb, var(--color-foreground) 6%, var(--color-background));
+  }
+
+  .bundle-builder__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .bundle-builder__product-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .bundle-builder__product-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .bundle-builder__product-title a:hover {
+    text-decoration: underline;
+  }
+
+  .bundle-builder__price {
+    margin: 0;
+    color: color-mix(in srgb, var(--color-foreground) 75%, transparent);
+  }
+
+  .bundle-builder__toggle,
+  .bundle-builder__submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.625rem 1rem;
+    border: 1px solid var(--color-foreground);
+    border-radius: var(--style-border-radius-inputs);
+    background: var(--color-foreground);
+    color: var(--color-background);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .bundle-builder__toggle[aria-pressed='true'] {
+    background: transparent;
+    color: var(--color-foreground);
+  }
+
+  .bundle-builder__submit {
+    width: 100%;
+  }
+
+  .bundle-builder__submit:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .bundle-builder__submit[aria-busy='true'] {
+    opacity: 0.65;
+    pointer-events: none;
+  }
+
+  .bundle-builder__footer {
+    width: min(100%, 24rem);
+    margin-inline: auto;
+    padding-top: 1.5rem;
+    border-top: 1px solid color-mix(in srgb, var(--color-foreground) 15%, transparent);
+  }
+
+  .bundle-builder__summary {
+    display: grid;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+    text-align: left;
+  }
+
+  .bundle-builder__summary p {
+    margin: 0;
+  }
+
+  .bundle-builder__empty {
+    text-align: center;
+    color: color-mix(in srgb, var(--color-foreground) 70%, transparent);
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class BundleBuilder extends HTMLElement {
+    #selectedItems = new Map();
+
+    connectedCallback() {
+      this.threshold = Number(this.dataset.discountThreshold) || 3;
+      this.discount = Number(this.dataset.discountPercentage) || 15;
+      this.currency = this.dataset.currency || 'USD';
+      this.locale = this.dataset.locale || undefined;
+      this.bundleLabel = this.dataset.bundleLabel || 'Bundle';
+      this.labels = {
+        add: this.dataset.labelAdd || 'Add to bundle',
+        added: this.dataset.labelAdded || 'In bundle',
+        submit: this.dataset.labelSubmit || 'Add bundle to cart',
+        submitting: this.dataset.labelSubmitting || 'Adding bundle…',
+        error: this.dataset.labelError || 'Could not add bundle',
+        statusRemaining: this.dataset.labelStatusRemaining || '',
+        statusUnlocked: this.dataset.labelStatusUnlocked || '',
+      };
+
+      this.countEl = this.querySelector('[data-bundle-count]');
+      this.subtotalEl = this.querySelector('[data-bundle-subtotal]');
+      this.progressEl = this.querySelector('[data-bundle-progress]');
+      this.progressBar = this.querySelector('[data-bundle-progress-bar]');
+      this.statusEl = this.querySelector('[data-bundle-status]');
+      this.submitBtn = this.querySelector('[data-bundle-submit]');
+
+      this.querySelectorAll('[data-bundle-toggle]').forEach((button) => {
+        button.addEventListener('click', this.#onToggle);
+      });
+      this.submitBtn?.addEventListener('click', this.#onSubmit);
+
+      this.updateState();
+    }
+
+    disconnectedCallback() {
+      this.querySelectorAll('[data-bundle-toggle]').forEach((button) => {
+        button.removeEventListener('click', this.#onToggle);
+      });
+      this.submitBtn?.removeEventListener('click', this.#onSubmit);
+    }
+
+    #onToggle = (event) => {
+      const card = event.currentTarget.closest('[data-bundle-card]');
+      if (!card) return;
+
+      const variantId = card.dataset.variantId;
+      const price = Number(card.dataset.price) || 0;
+      const button = card.querySelector('[data-bundle-toggle]');
+
+      if (this.#selectedItems.has(variantId)) {
+        this.#selectedItems.delete(variantId);
+        card.classList.remove('is-selected');
+        button?.setAttribute('aria-pressed', 'false');
+        if (button) button.textContent = this.labels.add;
+      } else {
+        this.#selectedItems.set(variantId, { price });
+        card.classList.add('is-selected');
+        button?.setAttribute('aria-pressed', 'true');
+        if (button) button.textContent = this.labels.added;
+      }
+
+      this.updateState();
+    };
+
+    #onSubmit = async () => {
+      if (!this.submitBtn || this.#selectedItems.size < this.threshold) return;
+
+      this.submitBtn.setAttribute('aria-busy', 'true');
+      this.submitBtn.disabled = true;
+      this.submitBtn.textContent = this.labels.submitting;
+
+      const items = Array.from(this.#selectedItems.keys()).map((id) => ({
+        id: Number(id),
+        quantity: 1,
+        properties: { _bundle: this.bundleLabel },
+      }));
+
+      try {
+        if (window.CartAjax?.addItems) {
+          await window.CartAjax.addItems(items);
+        } else {
+          const response = await fetch(`${window.Shopify?.routes?.root || '/'}cart/add.js`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ items }),
+          });
+          if (!response.ok) throw new Error('Bundle add failed');
+          document.documentElement.dispatchEvent(
+            new CustomEvent('cart:updated', { bubbles: true, detail: { source: 'bundle-builder' } })
+          );
+          window.location.href = `${window.Shopify?.routes?.root || '/'}cart`;
+          return;
+        }
+
+        this.submitBtn.textContent = this.labels.submit;
+        this.submitBtn.removeAttribute('aria-busy');
+        this.updateState();
+      } catch (error) {
+        this.submitBtn.textContent = this.labels.error;
+        this.submitBtn.removeAttribute('aria-busy');
+        this.submitBtn.disabled = false;
+      }
+    };
+
+    updateState() {
+      const count = this.#selectedItems.size;
+      let subtotal = 0;
+      this.#selectedItems.forEach((item) => {
+        subtotal += item.price;
+      });
+
+      if (this.countEl) this.countEl.textContent = String(count);
+      if (this.subtotalEl) this.subtotalEl.textContent = this.formatMoney(subtotal);
+
+      const pct = Math.min((count / this.threshold) * 100, 100);
+      if (this.progressBar) this.progressBar.style.width = `${pct}%`;
+      if (this.progressEl) this.progressEl.setAttribute('aria-valuenow', String(count));
+
+      if (count >= this.threshold) {
+        if (this.statusEl) this.statusEl.textContent = this.labels.statusUnlocked;
+        this.submitBtn?.removeAttribute('disabled');
+      } else {
+        const remaining = this.threshold - count;
+        if (this.statusEl) {
+          this.statusEl.textContent = this.labels.statusRemaining.replaceAll(
+            '__COUNT__',
+            String(remaining)
+          );
+        }
+        this.submitBtn?.setAttribute('disabled', 'true');
+        if (this.submitBtn && this.submitBtn.getAttribute('aria-busy') !== 'true') {
+          this.submitBtn.textContent = this.labels.submit;
+        }
+      }
+    }
+
+    formatMoney(cents) {
+      try {
+        return new Intl.NumberFormat(this.locale, {
+          style: 'currency',
+          currency: this.currency,
+        }).format(cents / 100);
+      } catch (error) {
+        return (cents / 100).toFixed(2);
+      }
+    }
+  }
+
+  if (!customElements.get('bundle-builder')) {
+    customElements.define('bundle-builder', BundleBuilder);
+  }
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "t:general.bundle_builder",
+  "tag": "section",
+  "class": "section-bundle-builder",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:labels.heading",
+      "default": "Build your custom bundle"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "t:labels.subheading",
+      "default": "Choose any 3 items to unlock an automatic discount."
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "t:labels.bundle_collection"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "label": "t:labels.products_to_show",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "type": "range",
+      "id": "discount_threshold",
+      "label": "t:labels.discount_threshold",
+      "min": 2,
+      "max": 10,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "discount_percentage",
+      "label": "t:labels.discount_percentage",
+      "min": 5,
+      "max": 50,
+      "step": 5,
+      "unit": "%",
+      "default": 15,
+      "info": "t:info.bundle_discount"
+    },
+    {
+      "type": "text",
+      "id": "bundle_property_value",
+      "label": "t:labels.bundle_property_value",
+      "default": "Custom bundle",
+      "info": "t:info.bundle_property"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "t:labels.padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "t:labels.padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 36
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:general.bundle_builder"
+    }
+  ]
+}
+{% endschema %}

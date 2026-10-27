@@ -13,11 +13,13 @@
     {{ content_for_header }}
   </head>
 
-  <body>
+  <body data-cart-sections="">
     {% sections 'header-group' %}
 
     {{ content_for_layout }}
 
     {% sections 'footer-group' %}
+
+    <script src="{{ 'cart-ajax-controller.js' | asset_url }}" defer></script>
   </body>
 </html>

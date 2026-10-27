@@ -13,11 +13,24 @@
     "comment_form_submit": "Post",
     "comment_form_title": "Add a comment"
   },
+  "bundle": {
+    "add": "Add to bundle",
+    "added": "In bundle",
+    "empty_collection": "Choose a collection with available products to build a bundle.",
+    "error": "Could not add bundle",
+    "items_count": "Items in bundle",
+    "status_remaining": "Select {{ count }} more to unlock {{ discount }}% off",
+    "status_unlocked": "{{ discount }}% bundle discount unlocked",
+    "submit": "Add bundle to cart",
+    "submitting": "Adding bundle…",
+    "subtotal": "Subtotal"
+  },
   "cart": {
     "checkout": "Checkout",
     "title": "Cart",
     "update": "Update",
-    "remove": "Remove"
+    "remove": "Remove",
+    "upsell_add": "Add to order"
   },
   "customers": {
     "login": {

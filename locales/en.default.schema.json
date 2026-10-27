@@ -4,6 +4,7 @@
     "article": "Article",
     "block": "Block",
     "blog": "Blog",
+    "bundle_builder": "Bundle builder",
     "cart": "Cart",
     "collection": "Collection",
     "collections": "Collections",
@@ -23,12 +24,14 @@
     "password": "Password",
     "primary": "Primary",
     "product": "Product",
+    "product_specifications": "Product Specifications",
     "row": "Row",
     "search": "Search",
     "secondary": "Secondary",
     "section": "Section",
     "settings": "Settings",
     "sidebar": "Sidebar",
+    "spec_item": "Custom Spec Tab",
     "text": "Text",
     "theme": "Theme",
     "typography": "Typography"
@@ -36,18 +39,38 @@
   "labels": {
     "alignment": "Alignment",
     "background": "Background",
+    "bundle_collection": "Bundle collection",
+    "bundle_property_value": "Bundle line-item property",
+    "cart_upsell_product": "Cart upsell product",
+    "content": "Content",
+    "discount_percentage": "Discount percentage",
+    "discount_threshold": "Items needed for discount",
     "foreground": "Foreground",
     "grid_gap": "Grid spacing",
     "grid_item_width": "Grid item width",
+    "heading": "Heading",
+    "ingredients_label": "Ingredients label",
     "input_corner_radius": "Input corner radius",
     "layout_direction": "Layout direction",
     "menu": "Menu",
+    "open_first_row": "Open first row by default",
     "padding": "Padding",
+    "padding_bottom": "Bottom padding",
+    "padding_top": "Top padding",
     "page_margin": "Page margin",
     "page_width": "Page width",
+    "products_to_show": "Products to show",
     "show_payment_icons": "Show payment icons",
+    "subheading": "Subheading",
     "text_style": "Text style",
-    "text": "Text"
+    "text": "Text",
+    "title": "Title"
+  },
+  "info": {
+    "bundle_discount": "Theme messaging only. Create a matching automatic discount in Shopify admin for the discount to apply at checkout.",
+    "bundle_property": "Saved on each line item as the _bundle property so discounts or reporting can target these items.",
+    "cart_upsell_product": "Shown in cart upsells when available and not already in the cart.",
+    "key_ingredients_metafield": "Shows product.metafields.custom.key_ingredients when set on the product."
   },
   "options": {
     "alignment": {
@@ -71,6 +94,6 @@
       "title": "Title",
       "subtitle": "Subtitle",
       "normal": "Normal text"
-    },
+    }
   }
 }
